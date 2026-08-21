@@ -1,2 +1,2 @@
 # Quercus_miquihuanensis
-Updated Quercus miquiguanensis page
+Updated Quercus miquihuanensis page
