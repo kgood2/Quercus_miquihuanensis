@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quercus miquihuanensis | Conservation Dashboard</title>
+    <style>
+        :root {
+            --sage-green: #9CAF88;
+            --forest-green: #2E4632;
+            --iucn-red: #D40000;
+            --sidebar-width: 350px;
+            --text-dark: #333;
+        }
+
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sage-green);
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px 15px 20px;
+            background: white;
+            text-align: center;
+        }
+
+        .sidebar-header h1 { font-size: 1.6rem; margin: 0; font-weight: 300; }
+        .sidebar-header i { font-style: italic; }
+
+        .status-badge {
+            margin-top: 10px;
+            display: inline-flex;
+            border: 1px solid var(--iucn-red);
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .status-type { background: var(--iucn-red); color: white; padding: 4px 8px; }
+        .status-criteria { padding: 4px 8px; font-family: monospace; background: white; }
+
+        /* --- Gallery --- */
+        .gallery-wrapper {
+            position: relative;
+            background: #333;
+            height: 200px;
+        }
+
+        .sidebar-gallery {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            height: 100%;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .sidebar-gallery::-webkit-scrollbar { display: none; }
+
+        .sidebar-gallery img {
+            flex: 0 0 100%;
+            height: 100%;
+            object-fit: cover;
+            scroll-snap-align: start;
+        }
+
+        .gallery-arrow {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 5;
+        }
+
+        /* --- Tabs --- */
+        .tab-container { padding: 10px 0; flex-grow: 1; overflow-y: auto; }
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-left: 5px solid transparent;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .tab:hover { background: rgba(255,255,255,0.2); }
+        .tab.active {
+            background: var(--forest-green);
+            color: white;
+            border-left: 5px solid white;
+        }
+        .tab-subtitle { display: block; font-size: 0.75rem; opacity: 0.8; margin-top: 4px; font-weight: normal; }
+
+        /* --- Ex Situ Stats --- */
+        .ex-situ-stats {
+            display: none; 
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            font-size: 0.85rem;
+            line-height: 1.4;
+            font-weight: normal;
+        }
+
+        .tab.active .ex-situ-stats {
+            display: block;
+        }
+
+        .stat-group { margin-bottom: 10px; }
+
+        /* --- Footer --- */
+        .external-links { padding: 15px 25px; border-top: 1px solid rgba(0,0,0,0.1); }
+        .external-links a { display: block; color: inherit; text-decoration: underline; margin-bottom: 8px; font-size: 0.85rem; }
+
+        .sidebar-footer {
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .sidebar-footer img { max-height: 35px; width: auto; filter: brightness(0) invert(1); }
+
+        /* --- Map View Area --- */
+        .map-view { 
+            flex-grow: 1; 
+            background-color: white; 
+            position: relative; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #mapFrame { 
+            width: 100%; 
+            height: 100%; 
+            border: none; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="sidebar">
+        <!-- Header -->
+        <div class="sidebar-header">
+            <h1><i>Quercus miquihuanensis</i></h1>
+            <div class="status-badge">
+                <span class="status-type">Endangered</span>
+                <span class="status-criteria">B1ab(iii)+2ab(iii)</span>
+            </div>
+        </div>
+
+        <!-- Gallery -->
+        <div class="gallery-wrapper">
+            <div class="sidebar-gallery" id="sidebarGallery">
+                <img src="Picture1.jpg" alt="Photo 1">
+                <img src="Picture2.jpg" alt="Photo 2">
+                <img src="Picture3.jpg" alt="Photo 3">
+                <img src="Picture4.jpg" alt="Photo 4">
+                <img src="Picture5.jpg" alt="Photo 5">
+                <img src="Picture6.jpg" alt="Photo 6">
+            </div>
+            <div class="gallery-arrow" onclick="scrollGallery()">&#10217;</div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tab-container">
+            <div class="tab active" onclick="switchMap('Occurrence.html', this)">
+                <span>Occurrence Map</span>
+                <span class="tab-subtitle">Click on each point for more information</span>
+            </div>
+            
+            <div class="tab" onclick="switchMap('SwipeMap.html', this)">
+                <span>Ex Situ Conservation</span>
+                <span class="tab-subtitle">Geographic and Ecological Coverage</span>
+                
+                <div class="ex-situ-stats">
+                    <div class="stat-group">
+                        2022 Geographic Coverage: 0%<br>
+                        2026 Geographic Coverage: 11.25%
+                    </div>
+                    <div class="stat-group">
+                        2022 Ecological Coverage: 0%<br>
+                        2026 Ecological Coverage: 66.67%
+                    </div>
+                    <div>Number of Ex Situ Collections: 2</div>
+                </div>
+            </div>
+
+            <!-- Changed from map3.png to ProtectedArea.html -->
+            <div class="tab" onclick="switchMap('ProtectedArea.html', this)">
+                <span>Protected Area Coverage</span>
+            </div>
+            
+            <div class="external-links">
+                <a href="https://www.iucnredlist.org/species/34667/2854098" target="_blank">Red List Assessment</a>
+                <a href="https://mortonarb.org/app/uploads/2024/09/gap_analysis_mesoamerica_profile_miquihuanensis_English.pdf" target="_blank">Species Profile (PDF)</a>
+            </div>
+        </div>
+
+        <!-- Logos -->
+        <div class="sidebar-footer">
+            <img src="logo1.png" alt="Logo 1">
+            <img src="logo2.png" alt="Logo 2">
+            <img src="logo3.png" alt="Logo 3">
+        </div>
+    </div>
+
+    <!-- Map View Area -->
+    <div class="map-view">
+        <iframe id="mapFrame" src="Occurrence.html"></iframe>
+    </div>
+</div>
+
+<script>
+    function switchMap(sourceFile, tabElement) {
+        const frame = document.getElementById('mapFrame');
+        
+        // Simplified to handle HTML files
+        frame.src = sourceFile;
+
+        // Handle tab styling
+        const tabs = document.querySelectorAll('.tab');
+        tabs.forEach(t => t.classList.remove('active'));
+        tabElement.classList.add('active');
+    }
+
+    function scrollGallery() {
+        const gallery = document.getElementById('sidebarGallery');
+        const scrollAmount = gallery.clientWidth;
+        if (gallery.scrollLeft + gallery.clientWidth >= gallery.scrollWidth - 5) {
+            gallery.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            gallery.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    }
+</script>
+
+</body>
+</html>
